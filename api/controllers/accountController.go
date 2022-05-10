@@ -3,51 +3,152 @@ package controllers
 import (
 	"TheWarEconomy/api/database"
 	"TheWarEconomy/api/models"
+	"TheWarEconomy/api/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 
-	"github.com/google/uuid"
+	"github.com/couchbase/gocb/v2"
+	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// @TODO: Handle responses, remove os.exit.
-// @TODO: Db indexes? Auto incrementing ids?
+type UserResponse struct {
+	Id       string `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}
+
+type PmcResponse struct {
+	Id     string `json:"id"`
+	UserId string `json:"userId"`
+	Name   string `json:"name"`
+}
+
+type SignUpResponse struct {
+	User  UserResponse
+	Pmc   PmcResponse
+	Token string `json:"token"`
+	Error string `json:"error"`
+}
+
+type Token struct {
+	UserId string
+	jwt.StandardClaims
+}
+
+func authenticate(email, password string) (string, bool) {
+	user := &models.User{}
+	twec := database.GetTweCluster()
+	qr, err := twec.Query("SELECT * FROM `users` WHERE email = $1", &gocb.QueryOptions{PositionalParameters: []interface{}{email}})
+
+	if err != nil {
+		return "Could not sign in.", false
+	}
+
+	err = qr.One(user)
+
+	if err != nil {
+		return "Could not sign in", false
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if err != nil {
+		return "Could not sign in.", false
+	}
+
+	tokenData := &Token{UserId: user.Id}
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenData)
+	tokenString, err := token.SignedString([]byte(os.Getenv(utils.EnvTokenSecret)))
+
+	if err != nil {
+		return "Could not sign in", false
+	}
+
+	return tokenString, true
+}
+
 func SignUp(w http.ResponseWriter, r *http.Request) {
-	uc := database.GetUsersCol()
-	id := uuid.NewString()
-	nu := models.User{
-		Id:       id,
-		Name:     "Test",
-		Email:    "test@mail.com",
-		Password: "test",
+	user := &models.User{}
+	pmc := &models.Pmc{
+		Name: user.PmcName,
 	}
 
-	_, err := uc.Upsert(id, nu, nil)
+	err := json.NewDecoder(r.Body).Decode(user)
 
 	if err != nil {
-		fmt.Println("Couldn't create user", err)
-		// swap for error response
-		os.Exit(1)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(&SignUpResponse{
+			Error: "Json decoding failed.",
+		})
+		return
 	}
 
-	getResult, err := uc.Get(id, nil)
+	p, err := pmc.Create()
 
 	if err != nil {
-		fmt.Println("Couldn't get user", err)
-		os.Exit(1)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(&SignUpResponse{
+			Error: "PMC creation failed.",
+		})
+		return
 	}
 
-	var foundUser models.User
-	err = getResult.Content(&foundUser)
+	u, err := user.Create(p.Id)
 
 	if err != nil {
-		fmt.Println("Couldn't parse user result", err)
-		os.Exit(1)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(&SignUpResponse{
+			Error: "User creation failed.",
+		})
+		return
 	}
 
+	_, err = pmc.LinkUser(u.Id)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(&SignUpResponse{
+			Error: "PMC to User association failed.",
+		})
+		return
+	}
+
+	// res = tokenString or err message... probably bad...
+	// @TODO: separate results?
+	tokenRes, ok := authenticate(user.Email, user.Password)
+
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(&SignUpResponse{
+			Error: tokenRes,
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(foundUser)
+	json.NewEncoder(w).Encode(&SignUpResponse{
+		User: UserResponse{
+			Id:       u.Id,
+			Username: u.Username,
+			Email:    u.Email,
+		},
+		Pmc: PmcResponse{
+			Id:     p.Id,
+			UserId: u.Id,
+			Name:   p.Name,
+		},
+		Token: tokenRes,
+		Error: "",
+	})
 }
 
 func SignIn(w http.ResponseWriter, r *http.Request) {

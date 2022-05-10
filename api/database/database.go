@@ -11,6 +11,8 @@ import (
 )
 
 var usersCol *gocb.Collection
+var pmcsCol *gocb.Collection
+var tweCluster *gocb.Cluster
 
 func init() {
 	envErr := godotenv.Load()
@@ -33,6 +35,8 @@ func init() {
 		os.Exit(1)
 	}
 
+	tweCluster = cluster
+
 	bucket := cluster.Bucket("the-war-economy")
 	err = bucket.WaitUntilReady(5*time.Second, nil)
 	if err != nil {
@@ -43,9 +47,11 @@ func init() {
 	scope := bucket.Scope("_default")
 
 	uc := scope.Collection("users")
+	pmcc := scope.Collection("pmcs")
 
-	if uc != nil {
+	if uc != nil && pmcc != nil {
 		usersCol = uc
+		pmcsCol = pmcc
 	} else {
 		fmt.Println("Error getting collections. Terminating...")
 		os.Exit(1)
@@ -54,4 +60,12 @@ func init() {
 
 func GetUsersCol() *gocb.Collection {
 	return usersCol
+}
+
+func GetPmcsCol() *gocb.Collection {
+	return pmcsCol
+}
+
+func GetTweCluster() *gocb.Cluster {
+	return tweCluster
 }

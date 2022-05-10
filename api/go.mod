@@ -14,4 +14,5 @@ require (
 require (
 	github.com/couchbase/gocbcore/v10 v10.1.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122 // indirect
 )
