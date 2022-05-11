@@ -1,0 +1,2 @@
+- create primary index user_idx on `users`
+- create primary index pmc_idx on `pmcs`
