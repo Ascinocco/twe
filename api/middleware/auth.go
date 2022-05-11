@@ -61,7 +61,7 @@ func JwtVerification(next http.Handler) http.Handler {
 		}
 
 		clientToken := tokenParts[1]
-		token := Token{}
+		token := &Token{}
 
 		parsedToked, err := jwt.ParseWithClaims(clientToken, token, func(t *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv(utils.EnvTokenSecret)), nil

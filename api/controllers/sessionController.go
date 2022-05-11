@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"TheWarEconomy/api/database"
+	"TheWarEconomy/api/middleware"
 	"TheWarEconomy/api/models"
 	"TheWarEconomy/api/utils"
 	"encoding/json"
@@ -12,11 +13,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type Token struct {
-	UserId string
-	jwt.StandardClaims
-}
 
 type SessionResponse struct {
 	Token string `json:"token"`
@@ -56,7 +52,7 @@ func authenticate(email, password string) (string, error) {
 		return "", errors.New("Unable to login, please try again")
 	}
 
-	tokenData := &Token{UserId: user.Id}
+	tokenData := &middleware.Token{UserId: user.Id}
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tokenData)
 	tokenString, err := token.SignedString([]byte(os.Getenv(utils.EnvTokenSecret)))
 

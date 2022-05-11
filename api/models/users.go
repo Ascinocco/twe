@@ -12,7 +12,6 @@ type User struct {
 	Id                   string `json:"id"`
 	Email                string `json:"email"`
 	Username             string `json:"username"`
-	PmcName              string `json:"pmcName"`
 	PmcId                string `json:"pmcId"`
 	Password             string `json:"password"`
 	PasswordConfirmation string `json:"passwordConfirmation"`
@@ -30,10 +29,6 @@ func (user *User) Validate() (string, bool) {
 
 	if strings.Compare(user.Password, user.PasswordConfirmation) != 0 {
 		return "Passwords do not match.", false
-	}
-
-	if len(user.PmcName) <= 5 {
-		return "PMC name must be at least 5 characters", false
 	}
 
 	if len(user.Username) < 3 {
@@ -56,6 +51,7 @@ func (user *User) Create() (*User, error) {
 	uc := database.GetUsersCol()
 
 	// @TODO: How to insure email, username and PMC name are unique? use look up document, make the email the id...
+	// @TODO: don't leak email addresses?
 	_, err := uc.Insert(user.Id, user, nil)
 
 	return user, err

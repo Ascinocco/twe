@@ -24,10 +24,19 @@ func (pmc *Pmc) Create(userId string) (*Pmc, error) {
 		return pmc, errors.New(errMsg)
 	}
 
+	// @TODO: add pmc id to user
+	// @TODO: limit 1 pmc per user
 	pmc.Id = pmc.Name
 	pmc.UserId = userId
 	pmcc := database.GetPmcsCol()
 	_, err := pmcc.Insert(pmc.Id, pmc, nil)
+
+	if err == nil {
+		uc := database.GetUsersCol()
+		uc.Upsert(userId, &User{
+			PmcId: pmc.Id,
+		}, nil)
+	}
 
 	return pmc, err
 }
