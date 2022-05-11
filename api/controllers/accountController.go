@@ -5,6 +5,7 @@ import (
 	"TheWarEconomy/api/models"
 	"TheWarEconomy/api/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -38,25 +39,30 @@ type Token struct {
 	jwt.StandardClaims
 }
 
-func authenticate(email, password string) (string, bool) {
-	user := &models.User{}
-	twec := database.GetTweCluster()
-	qr, err := twec.Query("SELECT * FROM `users` WHERE email = $1", &gocb.QueryOptions{PositionalParameters: []interface{}{email}})
+func authenticate(email, password string) (string, error) {
+	user := models.User{}
+	twes := database.GetTweScope()
+	qr, err := twes.Query("SELECT U.* FROM `users` U WHERE email = $email", &gocb.QueryOptions{
+		NamedParameters: map[string]interface{}{
+			"email": email,
+		},
+	})
 
 	if err != nil {
-		return "Could not sign in.", false
+		fmt.Println(err)
+		return "", errors.New("Could not sign in.")
 	}
 
-	err = qr.One(user)
+	err = qr.One(&user)
 
 	if err != nil {
-		return "Could not sign in", false
+		return "", errors.New("Could not sign in.")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
-		return "Could not sign in.", false
+		return "", errors.New("Could not sign in.")
 	}
 
 	tokenData := &Token{UserId: user.Id}
@@ -64,18 +70,14 @@ func authenticate(email, password string) (string, bool) {
 	tokenString, err := token.SignedString([]byte(os.Getenv(utils.EnvTokenSecret)))
 
 	if err != nil {
-		return "Could not sign in", false
+		return "", errors.New("Could not sign in.")
 	}
 
-	return tokenString, true
+	return tokenString, nil
 }
 
 func SignUp(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
-	pmc := &models.Pmc{
-		Name: user.PmcName,
-	}
-
 	err := json.NewDecoder(r.Body).Decode(user)
 
 	if err != nil {
@@ -85,6 +87,12 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 			Error: "Json decoding failed.",
 		})
 		return
+	}
+
+	pw := user.Password
+
+	pmc := &models.Pmc{
+		Name: user.PmcName,
 	}
 
 	p, err := pmc.Create()
@@ -120,15 +128,13 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// res = tokenString or err message... probably bad...
-	// @TODO: separate results?
-	tokenRes, ok := authenticate(user.Email, user.Password)
+	tokenRes, err := authenticate(user.Email, pw)
 
-	if !ok {
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(&SignUpResponse{
-			Error: tokenRes,
+			Error: err.Error(),
 		})
 		return
 	}
