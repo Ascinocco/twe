@@ -3,6 +3,8 @@ package models
 import (
 	"TheWarEconomy/api/database"
 	"errors"
+
+	"github.com/couchbase/gocb/v2"
 )
 
 type Pmc struct {
@@ -24,8 +26,6 @@ func (pmc *Pmc) Create(userId string) (*Pmc, error) {
 		return pmc, errors.New(errMsg)
 	}
 
-	// @TODO: add pmc id to user
-	// @TODO: limit 1 pmc per user
 	pmc.Id = pmc.Name
 	pmc.UserId = userId
 	pmcc := database.GetPmcsCol()
@@ -33,9 +33,10 @@ func (pmc *Pmc) Create(userId string) (*Pmc, error) {
 
 	if err == nil {
 		uc := database.GetUsersCol()
-		uc.Upsert(userId, &User{
-			PmcId: pmc.Id,
-		}, nil)
+		upds := []gocb.MutateInSpec{
+			gocb.UpsertSpec("pmcId", pmc.Id, nil),
+		}
+		uc.MutateIn(userId, upds, nil)
 	}
 
 	return pmc, err
