@@ -27,8 +27,9 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(middleware.JwtVerification)
 
-	router.HandleFunc("/sign-up", controllers.SignUp).Methods("POST")
-	router.HandleFunc("/sign-in", controllers.SignIn).Methods("POST")
+	router.HandleFunc("/user/create", controllers.CreateUser).Methods("POST")
+	router.HandleFunc("/session/create", controllers.CreateSession).Methods("POST")
+	router.HandleFunc("/pmc/create", controllers.CreatePmc).Methods("POST")
 	router.Handle("/", router)
 
 	c := cors.New(cors.Options{

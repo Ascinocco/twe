@@ -43,7 +43,7 @@ func (user *User) Validate() (string, bool) {
 	return "", true
 }
 
-func (user *User) Create(pmcId string) (*User, error) {
+func (user *User) Create() (*User, error) {
 	if errMsg, ok := user.Validate(); !ok {
 		return user, errors.New(errMsg)
 	}
@@ -52,7 +52,6 @@ func (user *User) Create(pmcId string) (*User, error) {
 	user.Id = user.Email
 	user.Password = string(hashedPw)
 	user.PasswordConfirmation = ""
-	user.PmcId = pmcId
 
 	uc := database.GetUsersCol()
 

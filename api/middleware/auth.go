@@ -20,7 +20,7 @@ type UnautherizedResponse struct {
 }
 
 type Token struct {
-	UserId uint
+	UserId string
 	jwt.StandardClaims
 }
 
@@ -33,7 +33,7 @@ func sendUnauthorizedResponse(w http.ResponseWriter) {
 
 func JwtVerification(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		publicEndpoint := []string{"/sign-up", "/sign-in"}
+		publicEndpoint := []string{"/user/create", "/session/create"}
 		reqPath := r.URL.Path
 
 		// if request in to public endpoint, pass through
@@ -77,7 +77,7 @@ func JwtVerification(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", token.UserId)
+		ctx := context.WithValue(r.Context(), "userId", token.UserId)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})

@@ -19,21 +19,15 @@ func (pmc *Pmc) Validate() (string, bool) {
 	return "", true
 }
 
-func (pmc *Pmc) Create() (*Pmc, error) {
+func (pmc *Pmc) Create(userId string) (*Pmc, error) {
 	if errMsg, ok := pmc.Validate(); !ok {
 		return pmc, errors.New(errMsg)
 	}
 
 	pmc.Id = pmc.Name
+	pmc.UserId = userId
 	pmcc := database.GetPmcsCol()
 	_, err := pmcc.Insert(pmc.Id, pmc, nil)
 
-	return pmc, err
-}
-
-func (pmc *Pmc) LinkUser(userId string) (*Pmc, error) {
-	pmc.UserId = userId
-	pmcc := database.GetPmcsCol()
-	_, err := pmcc.Upsert(pmc.Id, pmc, nil)
 	return pmc, err
 }
