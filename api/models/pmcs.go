@@ -3,8 +3,6 @@ package models
 import (
 	"TheWarEconomy/api/database"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 type Pmc struct {
@@ -26,7 +24,7 @@ func (pmc *Pmc) Create() (*Pmc, error) {
 		return pmc, errors.New(errMsg)
 	}
 
-	pmc.Id = uuid.NewString()
+	pmc.Id = pmc.Name
 	pmcc := database.GetPmcsCol()
 	_, err := pmcc.Insert(pmc.Id, pmc, nil)
 

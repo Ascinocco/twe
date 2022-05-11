@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/couchbase/gocb/v2"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,27 +40,37 @@ type Token struct {
 
 func authenticate(email, password string) (string, error) {
 	user := models.User{}
-	twes := database.GetTweScope()
-	qr, err := twes.Query("SELECT U.* FROM `users` U WHERE email = $email", &gocb.QueryOptions{
-		NamedParameters: map[string]interface{}{
-			"email": email,
-		},
-	})
+	res, err := database.GetUsersCol().Get(email, nil)
+
+	// start - @TODO: Leave this for an example on querying...
+	// twes := database.GetTweScope()
+
+	// qr, err := twes.Query("SELECT U.* FROM `users` U WHERE email = $email", &gocb.QueryOptions{
+	// 	NamedParameters: map[string]interface{}{
+	// 		"email": email,
+	// 	},
+	// })
+
+	// user := models.User{}
+	// 	err = qr.One(&user)
+	// end -
+
+	res.Content(&user)
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("a", err)
 		return "", errors.New("Could not sign in.")
 	}
 
-	err = qr.One(&user)
-
 	if err != nil {
+		fmt.Println("b", err)
 		return "", errors.New("Could not sign in.")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
+		fmt.Println("c", err)
 		return "", errors.New("Could not sign in.")
 	}
 
@@ -70,6 +79,7 @@ func authenticate(email, password string) (string, error) {
 	tokenString, err := token.SignedString([]byte(os.Getenv(utils.EnvTokenSecret)))
 
 	if err != nil {
+		fmt.Println("d", err)
 		return "", errors.New("Could not sign in.")
 	}
 

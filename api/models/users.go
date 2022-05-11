@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -50,13 +49,14 @@ func (user *User) Create(pmcId string) (*User, error) {
 	}
 
 	hashedPw, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	user.Id = uuid.NewString()
+	user.Id = user.Email
 	user.Password = string(hashedPw)
 	user.PasswordConfirmation = ""
 	user.PmcId = pmcId
 
 	uc := database.GetUsersCol()
 
+	// @TODO: How to insure email, username and PMC name are unique? use look up document, make the email the id...
 	_, err := uc.Insert(user.Id, user, nil)
 
 	return user, err
