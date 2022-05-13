@@ -8,11 +8,12 @@ import (
 )
 
 type Pmc struct {
-	Id       string    `json:"id"`
-	UserId   string    `json:"userId"`
-	Name     string    `json:"name"`
-	Soliders []Soldier `json:"soldiers"`
-	Money    int64     `json:"money"`
+	Id          string      `json:"id"`
+	UserId      string      `json:"userId"`
+	Name        string      `json:"name"`
+	Soliders    []Soldier   `json:"soldiers"`
+	Money       int64       `json:"money"`
+	Deployments Deployments `json:"deployments"`
 }
 
 func (pmc *Pmc) Validate() (string, bool) {
