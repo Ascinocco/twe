@@ -4,6 +4,8 @@
   // @TODO: Extract types and network requests
   // @TODO: extract resource validation
   // @TODO: Fix prettier / eslint
+  // @TODO: Add stores
+  // @TODO: find a way to include auth header on all requests without explicitly handling it
   import { goto } from "$app/navigation";
 
   type FormErrors = {
