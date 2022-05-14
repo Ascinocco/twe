@@ -1,4 +1,9 @@
 <script lang="ts">
+  // @TODO: Re-style / unfuck sign-in and sign up pages
+  // @TODO: Fix broken layout issues
+  // @TODO: Extract types and network requests
+  // @TODO: extract resource validation
+  // @TODO: Fix prettier / eslint
   import { goto } from "$app/navigation";
 
   type FormErrors = {
