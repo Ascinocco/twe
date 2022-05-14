@@ -8,15 +8,17 @@
   // @TODO: find a way to include auth header on all requests without explicitly handling it
   import { goto } from "$app/navigation";
 
-  type FormErrors = {
-    email?: string;
-    password?: string;
-  } | undefined;
+  type FormErrors =
+    | {
+        email?: string;
+        password?: string;
+      }
+    | undefined;
 
   type LoginResponse = {
     token: string;
     error: string;
-  }
+  };
 
   let email = "";
   let password = "";
@@ -28,15 +30,15 @@
 
     if (!email) {
       errors = {
-        email: "Email is required"
-      }
+        email: "Email is required",
+      };
     }
 
     if (!password) {
       errors = {
         ...errors,
         password: "Password is required",
-      }
+      };
     }
 
     return errors;
@@ -50,20 +52,20 @@
         password,
       }),
     })
-    .then(res => res.json())
-    .then((res: LoginResponse) => {
-      if (res.error) {
-        apiError = res.error;
-        return;
-      }
+      .then((res) => res.json())
+      .then((res: LoginResponse) => {
+        if (res.error) {
+          apiError = res.error;
+          return;
+        }
 
-      apiError = null;
-      sessionStorage.setItem("token", res.token);
+        apiError = null;
+        sessionStorage.setItem("token", res.token);
 
-      // @TODO: fetch user when we have endpoint, or attach email and username to session response...
-      goto("/pmc")
-    });
-  }
+        // @TODO: fetch user when we have endpoint, or attach email and username to session response...
+        goto("/pmc");
+      });
+  };
 
   const handleSubmit = () => {
     errors = validateFormData();
@@ -82,7 +84,13 @@
             <label for="email" class="label">
               <span class="label-text-alt text-black">Email</span>
             </label>
-            <input bind:value={email} name="email" type="email" placeholder="Email" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={email}
+              name="email"
+              type="email"
+              placeholder="Email"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.email}
                 {errors.email}
@@ -93,7 +101,13 @@
             <label for="password" class="label">
               <span class="label-text-alt text-black">Password</span>
             </label>
-            <input bind:value={password} name="password" type="password" placeholder="Password" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={password}
+              name="password"
+              type="password"
+              placeholder="Password"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.password}
                 {errors.password}
