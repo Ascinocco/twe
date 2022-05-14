@@ -27,6 +27,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(middleware.JwtVerification)
 
+	// @TODO: Look up restful routing and re-structure urls
 	router.HandleFunc("/user/create", controllers.CreateUser).Methods("POST", "OPTIONS")
 	router.HandleFunc("/session/create", controllers.CreateSession).Methods("POST", "OPTIONS")
 	router.HandleFunc("/pmc/create", controllers.CreatePmc).Methods("POST", "OPTIONS")
