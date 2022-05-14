@@ -33,6 +33,8 @@ func reader(conn *websocket.Conn) {
 	}
 }
 
+// @TODO: WS endpoint needs to be public bc, you cant send http headers, so no bearer token. Message handler will need to verify
+// authorization of user.
 func EstablishWsConn(w http.ResponseWriter, r *http.Request) {
 	// @TODO: restrict origin
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }

@@ -30,6 +30,7 @@ func main() {
 	router.HandleFunc("/user/create", controllers.CreateUser).Methods("POST")
 	router.HandleFunc("/session/create", controllers.CreateSession).Methods("POST")
 	router.HandleFunc("/pmc/create", controllers.CreatePmc).Methods("POST")
+	router.HandleFunc("/ws", controllers.EstablishWsConn)
 	router.Handle("/", router)
 
 	c := cors.New(cors.Options{

@@ -33,7 +33,7 @@ func sendUnauthorizedResponse(w http.ResponseWriter) {
 
 func JwtVerification(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		publicEndpoint := []string{"/user/create", "/session/create"}
+		publicEndpoint := []string{"/user/create", "/session/create", "/ws"}
 		reqPath := r.URL.Path
 
 		// if request in to public endpoint, pass through
