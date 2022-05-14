@@ -13,6 +13,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+// @TODO: Create messaging folder, place this there, along with other ws specific stuff other than http endpoint
 func reader(conn *websocket.Conn) {
 	for {
 		messageType, p, err := conn.ReadMessage()
