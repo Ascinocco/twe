@@ -27,15 +27,18 @@ func main() {
 	router := mux.NewRouter()
 	router.Use(middleware.JwtVerification)
 
-	router.HandleFunc("/user/create", controllers.CreateUser).Methods("POST")
-	router.HandleFunc("/session/create", controllers.CreateSession).Methods("POST")
-	router.HandleFunc("/pmc/create", controllers.CreatePmc).Methods("POST")
+	router.HandleFunc("/user/create", controllers.CreateUser).Methods("POST", "OPTIONS")
+	router.HandleFunc("/session/create", controllers.CreateSession).Methods("POST", "OPTIONS")
+	router.HandleFunc("/pmc/create", controllers.CreatePmc).Methods("POST", "OPTIONS")
 	router.HandleFunc("/ws", controllers.EstablishWsConn)
-	router.Handle("/", router)
+	router.Handle("/", router).Methods("OPTIONS")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowCredentials: true,
+		AllowedMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedOrigins:     []string{"*"},
+		AllowCredentials:   true,
+		AllowedHeaders:     []string{"Content-Type", "Bearer", "Bearer ", "content-type", "Origin", "Accept", "Authorization", "Authorization ", "X-Requested-With"},
+		OptionsPassthrough: true,
 	})
 
 	handler := c.Handler(router)

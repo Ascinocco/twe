@@ -33,6 +33,13 @@ func sendUnauthorizedResponse(w http.ResponseWriter) {
 
 func JwtVerification(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			// @TODO: if options request, bypass auth mechanism and return ok status code
+			// otherwise cors will fail
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		publicEndpoint := []string{"/user/create", "/session/create", "/ws"}
 		reqPath := r.URL.Path
 
