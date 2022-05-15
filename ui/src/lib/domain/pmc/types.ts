@@ -8,3 +8,9 @@ export type CreatePmcResponse = {
   name: string;
   error: string;
 };
+
+export type Pmc = {
+  id: string;
+  userId: string;
+  name: string;
+};

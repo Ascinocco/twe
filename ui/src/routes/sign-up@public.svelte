@@ -4,7 +4,7 @@
   import { validate as validateSignInForm, signUp } from "$lib/domain/sign-up";
   import { userStore } from "$lib/domain/user";
   import { login } from "$lib/domain/sign-in";
-  import { createPmc } from "$lib/domain/pmc";
+  import { createPmc, pmcStore } from "$lib/domain/pmc";
 
   let email = "";
   let username = "";
@@ -59,6 +59,12 @@
               }
 
               apiError = null;
+              pmcStore.update({
+                id: res.id,
+                userId: res.userId,
+                name: res.name,
+              });
+
               goto("/pmc");
             })
             .catch((err) => {
