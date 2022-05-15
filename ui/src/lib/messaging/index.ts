@@ -24,6 +24,9 @@ export const wsHandler = () => {
   };
 
   socket.onmessage = (msg) => {
+    // @TODO: Figure out how to structure message handlers
+    // @TODO: Somewhere you'll need to leverage decoders after
+    // parsing the message data
     console.log("message recieved", JSON.parse(msg.data));
   };
 
