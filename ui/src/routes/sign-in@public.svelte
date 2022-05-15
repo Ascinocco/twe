@@ -1,59 +1,22 @@
 <script lang="ts">
   // @TODO: Re-style / unfuck sign-in and sign up pages
   // @TODO: Fix broken layout issues
-  // @TODO: Extract types and network requests
-  // @TODO: extract resource validation
-  // @TODO: Fix prettier / eslint
   // @TODO: Add stores
   // @TODO: find a way to include auth header on all requests without explicitly handling it
   import { goto } from "$app/navigation";
-
-  type FormErrors =
-    | {
-        email?: string;
-        password?: string;
-      }
-    | undefined;
-
-  type LoginResponse = {
-    token: string;
-    error: string;
-  };
+  import { validate, login } from "$lib/domain/sign-in";
+  import type { LoginFormErrors } from "$lib/domain/sign-in";
 
   let email = "";
   let password = "";
-  let errors: FormErrors;
-  let apiError;
+  let errors: LoginFormErrors;
+  let apiError: string | null;
 
-  const validateFormData = () => {
-    let errors: FormErrors = undefined;
-
-    if (!email) {
-      errors = {
-        email: "Email is required",
-      };
-    }
-
-    if (!password) {
-      errors = {
-        ...errors,
-        password: "Password is required",
-      };
-    }
-
-    return errors;
-  };
-
-  const login = () => {
-    fetch("http://localhost:8080/session/create", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    })
-      .then((res) => res.json())
-      .then((res: LoginResponse) => {
+  const handleSubmit = () => {
+    errors = validate({ email, password });
+    if (errors) return;
+    login({ email, password })
+      .then((res) => {
         if (res.error) {
           apiError = res.error;
           return;
@@ -61,16 +24,11 @@
 
         apiError = null;
         sessionStorage.setItem("token", res.token);
-
-        // @TODO: fetch user when we have endpoint, or attach email and username to session response...
         goto("/pmc");
+      })
+      .catch((err) => {
+        apiError = err;
       });
-  };
-
-  const handleSubmit = () => {
-    errors = validateFormData();
-    if (errors) return;
-    login();
   };
 </script>
 
@@ -115,6 +73,11 @@
             </span>
           </div>
           <div class="card-actions">
+            <span class="label-text-alt text-rose-800 p-1 input-error">
+              {#if apiError}
+                {apiError}
+              {/if}
+            </span>
             <button for="sign-in" class="btn btn-primary btn-block" type="submit">Sign In</button>
           </div>
         </form>
