@@ -11,3 +11,6 @@ export class NetworkError extends Error {
 export const getAuthHeaders = () => ({
   Authorization: `Bearer ${sessionStorage.getItem("token")}`,
 });
+
+// @TODO: Allow value to be set by env vars
+export const getWsUrl = () => "ws://localhost:8080/ws";
