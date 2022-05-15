@@ -7,7 +7,12 @@ export const wsHandler = () => {
     console.log("connected");
     // @TODO: fetch user
     // @TODO: fetch pmc
-    socket.send("hi from client");
+    socket.send(
+      JSON.stringify({
+        token: sessionStorage.getItem("token"),
+        type: "hello",
+      }),
+    );
   };
 
   socket.onclose = (e) => {
@@ -19,7 +24,7 @@ export const wsHandler = () => {
   };
 
   socket.onmessage = (msg) => {
-    console.log("message recieved", msg);
+    console.log("message recieved", JSON.parse(msg.data));
   };
 
   return socket;

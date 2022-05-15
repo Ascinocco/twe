@@ -1,6 +1,8 @@
 package messaging
 
-import "github.com/gorilla/websocket"
+import (
+	"github.com/gorilla/websocket"
+)
 
 type Msg struct {
 	conn    *websocket.Conn
@@ -10,15 +12,15 @@ type Msg struct {
 }
 
 type HelloResponse struct {
-	message string
+	Message string `json:"message"`
 }
 
 func HandleMsg(msg Msg) {
 	switch msg.msgType {
 	case "hello":
 		{
-			msg.conn.WriteJSON(HelloResponse{
-				message: "Hi",
+			msg.conn.WriteJSON(&HelloResponse{
+				Message: "hi",
 			})
 		}
 	}
