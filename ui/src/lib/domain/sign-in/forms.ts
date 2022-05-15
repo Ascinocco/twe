@@ -1,7 +1,9 @@
 import type { LoginFormFields, LoginFormErrors } from "./types";
 
+const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
 export const validate = ({ email, password }: LoginFormFields) => {
-  let errors: LoginFormErrors = undefined;
+  let errors: LoginFormErrors;
 
   if (!email) {
     errors = {
@@ -9,11 +11,9 @@ export const validate = ({ email, password }: LoginFormFields) => {
     };
   }
 
-  // @TODO: Better client side validation
-  if (!password) {
+  if (!pwRegex.test(password || "")) {
     errors = {
-      ...errors,
-      password: "Password is required",
+      password: "Password must be at least 8 characters, and contain a number and symbol.",
     };
   }
 

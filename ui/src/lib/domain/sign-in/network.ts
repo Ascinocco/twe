@@ -1,4 +1,4 @@
-import { getReqUrl } from "$lib/utils/network";
+import { getReqUrl, NetworkError } from "$lib/utils/network";
 import type { LoginFormFields, LoginResponse } from "./types";
 import { loginResponseDecoder } from "./decoders";
 
@@ -15,7 +15,7 @@ export const login = (fields: LoginFormFields): Promise<LoginResponse> =>
     .then((res) => {
       const lr = loginResponseDecoder.verify(res);
       if (!lr) {
-        throw new Error("Network error occured");
+        throw new NetworkError();
       }
 
       return lr;

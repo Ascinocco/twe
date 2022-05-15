@@ -1,157 +1,74 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  type FormErrors = {
-    email?: string;
-    username?: string;
-    password?: string;
-    passwordConfirmation?: string;
-    pmcName?: string;
-  } | undefined;
-
-  type CreateUserResponse = {
-    email: string;
-    username: string;
-    token: string;
-    error: string;
-  };
-
-  type LoginResponse = {
-    token: string;
-    error: string;
-  }
-
-  type CreatePmcResponse = {
-    id: string;
-    userId: string;
-    name: string;
-    error: string;
-  }
-
-  const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+  import type { SignUpFormErrors } from "$lib/domain/sign-up";
+  import { validate as validateSignInForm, signUp } from "$lib/domain/sign-up";
+  import { userStore } from "$lib/domain/user";
+  import { login } from "$lib/domain/sign-in";
+  import { createPmc } from "$lib/domain/pmc";
 
   let email = "";
   let username = "";
   let password = "";
   let pmcName = "";
   let passwordConfirmation = "";
-  let errors: FormErrors;
+  let errors: SignUpFormErrors;
   let apiError: string | null;
 
-  const validateFormData = () => {
-    let errors: FormErrors = undefined;
+  const handleSubmit = () => {
+    const data = {
+      email,
+      username,
+      password,
+      passwordConfirmation,
+      pmcName,
+    };
 
-    if (!email) {
-      errors = {
-        email: "Email is required."
-      }
-    }
+    errors = validateSignInForm(data);
 
-    if (!username) {
-      errors = {
-        ...errors,
-        username: "Username is required."
-      }
-    }
+    if (errors) return;
 
-    if (!password) {
-      errors = {
-        ...errors,
-        password: "Password is required.",
-      }
-    }
-
-    if (!pwRegex.test(password)) {
-      errors = {
-        ...errors,
-        password: "Password must be at least 8 characters, and contain a number and symbol.",
-      }
-    }
-
-    if (!passwordConfirmation) {
-      errors = {
-        ...errors,
-        passwordConfirmation: "Please re-enter your password."
-      }
-    }
-
-    if (password !== passwordConfirmation) {
-      errors = {
-        ...errors,
-        passwordConfirmation: "Passwords do not match."
-      }
-    }
-
-    if (!pmcName) {
-      errors = {
-        ...errors,
-        pmcName: "Pmc name is required"
-      }
-    }
-
-    return errors;
-  };
-
-  const createUser = () => {
-    fetch("http://localhost:8080/user/create", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        username,
-        password,
-        passwordConfirmation
-      })
-    })
-    .then(res => res.json())
-    .then((res: CreateUserResponse) => {
+    // @TODO: handle edge case where user is created but pmc creation fails.
+    signUp(data).then((res) => {
       if (res.error) {
         apiError = res.error;
         return;
       }
 
       apiError = null;
+      userStore.update({
+        id: res.id,
+        email: res.email,
+        username: res.username,
+      });
 
-
-      fetch("http://localhost:8080/session/create", {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password
-        })
-      })
-      .then(res => res.json())
-      .then((res: LoginResponse) => {
-        if (res.error) {
-          apiError = res.error;
-          return;
-        }
-
-        sessionStorage.setItem("token", res.token);
-        
-        fetch("http://localhost:8080/pmc/create", {
-          method: "POST",
-          headers: {"Authorization": `Bearer ${res.token}`},
-          body: JSON.stringify({
-            name: pmcName
-          })
-        })
-        .then(res => res.json())
-        .then((res: CreatePmcResponse) => {
+      login({ email, password })
+        .then((res) => {
           if (res.error) {
             apiError = res.error;
-            return
+            return;
           }
 
-          goto("/pmc")
+          apiError = null;
+          sessionStorage.setItem("token", res.token);
+
+          createPmc({ name: pmcName })
+            .then((res) => {
+              if (res.error) {
+                apiError = res.error;
+                return;
+              }
+
+              apiError = null;
+              goto("/pmc");
+            })
+            .catch((err) => {
+              apiError = err;
+            });
         })
-
-      })
-    })
-  }
-
-  const handleSubmit = () => {
-    errors = validateFormData();
-    if (errors) return;
-    createUser();
+        .catch((err) => {
+          apiError = err;
+        });
+    });
   };
 </script>
 
@@ -165,7 +82,13 @@
             <label for="email" class="label">
               <span class="label-text-alt text-black">Email</span>
             </label>
-            <input bind:value={email} name="email" type="email" placeholder="Email" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={email}
+              name="email"
+              type="email"
+              placeholder="Email"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.email}
                 {errors.email}
@@ -176,7 +99,13 @@
             <label for="Username" class="label">
               <span class="label-text-alt text-black">Username</span>
             </label>
-            <input bind:value={username} name="username" type="text" placeholder="Username" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={username}
+              name="username"
+              type="text"
+              placeholder="Username"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.username}
                 {errors.username}
@@ -187,7 +116,13 @@
             <label for="pmcName" class="label">
               <span class="label-text-alt text-black">PMC Name</span>
             </label>
-            <input bind:value={pmcName} name="pmcName" type="text" placeholder="Pmc name" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={pmcName}
+              name="pmcName"
+              type="text"
+              placeholder="Pmc name"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.pmcName}
                 {errors.pmcName}
@@ -198,7 +133,13 @@
             <label for="password" class="label">
               <span class="label-text-alt text-black">Password</span>
             </label>
-            <input bind:value={password} name="password" type="password" placeholder="Password" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={password}
+              name="password"
+              type="password"
+              placeholder="Password"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.password}
                 {errors.password}
@@ -209,7 +150,13 @@
             <label for="password-confirmation" class="label">
               <span class="label-text-alt text-black">Password Confirmation</span>
             </label>
-            <input bind:value={passwordConfirmation} name="password-confirmation" type="password" placeholder="Password Confirmation" class="input input-bordered w-full max-w-xs text-slate-400">
+            <input
+              bind:value={passwordConfirmation}
+              name="password-confirmation"
+              type="password"
+              placeholder="Password Confirmation"
+              class="input input-bordered w-full max-w-xs text-slate-400"
+            />
             <span class="label-text-alt text-rose-800 p-1 input-error">
               {#if errors && errors.passwordConfirmation}
                 {errors.passwordConfirmation}
